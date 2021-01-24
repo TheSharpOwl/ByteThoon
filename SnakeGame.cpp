@@ -9,16 +9,37 @@
 #include <stdio.h>
 #include <chrono>
 
+
+// CPP standard can u please add + operator to std::pair))
+// call me crazy I don't care
+template<typename T, typename U>
+std::pair<T, U> operator+(const std::pair<T, U>& l, const std::pair<T, U>& r)
+{
+    return { l.first + r.first, l.second + r.second };
+}
+
+template<typename T, typename U>
+std::pair<T, U>& operator+=(std::pair<T, U>& l, const std::pair<T, U>& r)
+{
+	l.first += r.first;
+	l.second += r.second;
+	return l;
+}
+
 const int fieldWidth = 70, fieldHeight = 20;
 const int screenWidth = 100, screenHeight = 23;
 
-std::vector<std::pair<unsigned int, unsigned int>> bodyCoord;
+bool gameOver = false;
+wchar_t* playFieldBuffer;
+
+std::vector<std::pair<int,int>> bodyCoord;
+std::pair<int, int> directions[] = { {1,0},{-1,0}, {0,1}, {0,-1} };
 
 void draw(int fieldWidth, int fieldHeight)
 {
-    for (unsigned int i = 0; i < fieldHeight + 1; i++)
+    for (int i = 0; i < fieldHeight + 1; i++)
     {
-        for (unsigned int j = 0; j < fieldWidth + 1; j++)
+        for (int j = 0; j < fieldWidth + 1; j++)
         {
             if (i == 0 || i == fieldHeight - 1 || j == 0 || j == fieldWidth - 1)
                 std::cout << "#";
@@ -33,26 +54,59 @@ void draw(int fieldWidth, int fieldHeight)
 
 void start()
 {
+    // clear the everything if we played before to start over
+    bodyCoord.clear();
+
     // using time as a seed for our random start point
     std::srand((unsigned int) std::time(nullptr));
-    uint32_t startX = std::rand() % fieldWidth + 1;
-    uint32_t startY = std::rand() % fieldHeight + 1;
+    uint32_t startX = std::rand() % (fieldWidth - 2)  + 1;
+    uint32_t startY = std::rand() % (fieldHeight - 2) + 1;
 
     bodyCoord.push_back({startX, startY});
 }
 
+enum class Direction
+{
+	Right = 0,
+	Left = 1,
+	Up = 2,
+	Down = 3
+};
+
+void moveSnake()
+{
+    // default direction when we start is right 
+    static Direction currentDirection = Direction::Right;
+
+    Direction newDirection = currentDirection;
+    // TODO check keyboard input and take it to new direction
+
+    // you can't go right directly from left (and the opposite) nor up then down directly (nor the opposite)
+    std::pair<int,int> checkSum = directions[static_cast<int>(currentDirection)] + directions[static_cast<int>(newDirection)];
+    if (checkSum.first != 0 && checkSum.second != 0)
+        currentDirection = newDirection;
+
+    auto temp = bodyCoord[0];
+    for (auto& a : bodyCoord)
+    {
+        if (a == bodyCoord[0])//the head
+            a += directions[static_cast<int>(currentDirection)];
+        else
+            swap(a, temp);
+    }
+}
 int main()
 {
+    // setting up the console screen
     wchar_t* screen = new wchar_t[screenWidth * screenHeight];
     DWORD writtenBytes = 0;
-
     for (int i = 0; i < screenWidth * screenHeight; i++)
         screen[i] = L' ';
     HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
     SetConsoleActiveScreenBuffer(hConsole);
 
-    wchar_t* playFieldBuffer = new wchar_t[fieldWidth * fieldHeight];
-
+    // filling the player field without the snake
+    playFieldBuffer = new wchar_t[fieldWidth * fieldHeight];
     for(int i = 0; i < fieldWidth;i++)
         for (int j = 0 ; j < fieldHeight; j++)
         {
@@ -62,15 +116,32 @@ int main()
                 playFieldBuffer[j * fieldWidth + i] = L' ';
         }
 
+    start();
+
     // TODO change this line to game over condition or something else
     int t = 0;
     while (t < 500)
     {
         t++;
-        
-        for (int x = 0; x < fieldWidth; x++)
-            for (int y = 0; y < fieldHeight; y++)
-                screen[y * screenWidth + x] = playFieldBuffer[y * fieldWidth + x];
+
+		// copy the playground to the screen buffer
+		for (int x = 0; x < fieldWidth; x++)
+			for (int y = 0; y < fieldHeight; y++)
+				screen[y * screenWidth + x] = playFieldBuffer[y * fieldWidth + x];
+
+        moveSnake();
+
+        // copy the snake to the screen buffer
+        for (auto a : bodyCoord)
+            screen[a.second * screenWidth + a.first] = L'*';
+
+        // TODO not working yet
+        if (gameOver)
+        {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+
+       
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Small Step = 1 Game Tick
 
