@@ -129,23 +129,35 @@ int main()
 			for (int y = 0; y < fieldHeight; y++)
 				screen[y * screenWidth + x] = playFieldBuffer[y * fieldWidth + x];
 
-        moveSnake();
-
-        // copy the snake to the screen buffer
-        for (auto a : bodyCoord)
-            screen[a.second * screenWidth + a.first] = L'*';
-
-        // TODO not working yet
         if (gameOver)
         {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            start();
+            gameOver = false;
+        }
+        else
+            moveSnake();
+
+		// copy the snake to the screen buffer and if we lost and hit something mark it differently
+        int atHead = 0;
+        for (auto a : bodyCoord)
+        {
+            atHead += (a == bodyCoord[0]);
+
+			if (0 < a.first && a.first + 1 < fieldWidth  && 0 < a.second && a.second + 1 < fieldHeight && atHead < 2)
+				screen[a.second * screenWidth + a.first] = L'*';
+			else
+			{
+				screen[a.second * screenWidth + a.first] = L'X';
+				gameOver = true;
+			}
         }
 
-       
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Small Step = 1 Game Tick
+       WriteConsoleOutputCharacter(hConsole, screen, screenWidth * screenHeight, { 0,0 }, &writtenBytes);
 
-        WriteConsoleOutputCharacter(hConsole, screen, screenWidth * screenHeight, { 0,0 }, &writtenBytes);
+       // sleep for more time when you lose for the player comfort
+       int sleepingTime = gameOver ? 1000 : 50;
+       std::this_thread::sleep_for(std::chrono::milliseconds(sleepingTime)); // Small Step = 1 Game Tick
     }
     //std::cout << dwBytesWritten << std::endl;
     CloseHandle(hConsole);
