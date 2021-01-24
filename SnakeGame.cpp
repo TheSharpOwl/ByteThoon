@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <chrono>
 
+// TODO : hide the cursor in the console 
 
 // CPP standard can u please add + operator to std::pair))
 // call me crazy I don't care
@@ -26,8 +27,8 @@ std::pair<T, U>& operator+=(std::pair<T, U>& l, const std::pair<T, U>& r)
 	return l;
 }
 
-const int fieldWidth = 70, fieldHeight = 20;
-const int screenWidth = 100, screenHeight = 23;
+const int fieldWidth = 25, fieldHeight = 25;
+const int screenWidth = 96, screenHeight = 26;
 
 bool gameOver = false;
 wchar_t* playFieldBuffer;
@@ -73,13 +74,19 @@ enum class Direction
 	Down = 3
 };
 
-void moveSnake()
+void moveSnake(bool &onY)
 {
     // default direction when we start is right 
     static Direction currentDirection = Direction::Right;
 
     Direction newDirection = currentDirection;
     // TODO check keyboard input and take it to new direction
+    for (int k = 0; k < 4; k++)
+        if ((0x8000 & GetAsyncKeyState((unsigned char)("\x44\x41\x53\x57"[k])))) // D A W S
+        {
+            newDirection = static_cast<Direction>(k);
+            onY = k > 1;
+        }
 
     // you can't go right directly from left (and the opposite) nor up then down directly (nor the opposite)
     std::pair<int,int> checkSum = directions[static_cast<int>(currentDirection)] + directions[static_cast<int>(newDirection)];
@@ -129,13 +136,15 @@ int main()
 			for (int y = 0; y < fieldHeight; y++)
 				screen[y * screenWidth + x] = playFieldBuffer[y * fieldWidth + x];
 
+        bool onY = false;
+
         if (gameOver)
         {
             start();
             gameOver = false;
         }
         else
-            moveSnake();
+            moveSnake(onY);
 
 		// copy the snake to the screen buffer and if we lost and hit something mark it differently
         int atHead = 0;
@@ -156,10 +165,13 @@ int main()
        WriteConsoleOutputCharacter(hConsole, screen, screenWidth * screenHeight, { 0,0 }, &writtenBytes);
 
        // sleep for more time when you lose for the player comfort
-       int sleepingTime = gameOver ? 1000 : 50;
-       std::this_thread::sleep_for(std::chrono::milliseconds(sleepingTime)); // Small Step = 1 Game Tick
+       float temp = gameOver ? 1.f : 0.05f;
+       if(onY)
+        temp *= float(screenWidth) / float(screenHeight);
+       auto sleepingTime = static_cast<std::chrono::milliseconds>(int(temp * 1000));
+       std::this_thread::sleep_for(sleepingTime); // Small Step = 1 Game Tick
     }
-    //std::cout << dwBytesWritten << std::endl;
+
     CloseHandle(hConsole);
     return 0;
 }
