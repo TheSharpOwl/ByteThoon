@@ -8,6 +8,8 @@
 #include <thread>
 #include <stdio.h>
 #include <chrono>
+#include <string>
+#include <algorithm>
 
 // TODO : hide the cursor in the console 
 
@@ -29,6 +31,7 @@ std::pair<T, U>& operator+=(std::pair<T, U>& l, const std::pair<T, U>& r)
 
 const int fieldWidth = 50, fieldHeight = 25;
 const int screenWidth = 96, screenHeight = 26;
+const int games = 3;
 
 bool taken[50][25]; // [i][j] is true if there's a snake part at [i][j]
 bool gameOver = false, foodAv = false;
@@ -129,6 +132,18 @@ std::pair<int,int> generateFood()
     return { foodX, foodY };
 }
 
+void printPlayerInfo(wchar_t* screen, int score, int gamesLeft)
+{
+    auto printedScore = std::to_wstring(score);
+    auto printedGames = std::to_wstring(gamesLeft);
+
+    for(unsigned int i = 0; i < printedScore.size(); i++)
+        screen[screenWidth * 5 + fieldWidth + 7 + i] = printedScore[i];
+
+	for (unsigned int i = 0; i < printedGames.size(); i++)
+		screen[screenWidth * 9 + fieldWidth + 7 + i] = printedGames[i];
+}
+
 int main()
 {
     // setting up the console screen
@@ -150,16 +165,23 @@ int main()
             else
                 playFieldBuffer[j * fieldWidth + i] = L' ';
         }
+    for (int i = 0; i < 6; i++)
+    {
+        screen[screenWidth * 4 + fieldWidth + 7 + i] = L"SCORE:"[i];
+    }
+
+	for (int i = 0; i < 11; i++)
+	{
+		screen[screenWidth * 8 + fieldWidth + 7 + i] = L"TRIES LEFT:"[i];
+	}
 
     start();
     auto food = generateFood();
 
     // TODO change this line to game over condition "counter" or something else
-    int t = 0;
-    while (!gameOver)
+    int losts = 0, score = 0;
+    while (losts < 3)
     {
-        t++;
-
 		// copy the playground to the screen buffer
 		for (int x = 0; x < fieldWidth; x++)
 			for (int y = 0; y < fieldHeight; y++)
@@ -198,9 +220,12 @@ int main()
         if (!gameOver && justAte)
         {
             food = generateFood();
+            score++;
         }
 
         screen[food.second * screenWidth + food.first] = L'+';
+
+        printPlayerInfo(screen, score, games - losts);
 
        WriteConsoleOutputCharacter(hConsole, screen, screenWidth * screenHeight, { 0,0 }, &writtenBytes);
 
@@ -208,8 +233,10 @@ int main()
        float extraTime = (gameOver) ? 1.f : 0.05f;
        if(onY)
            extraTime *= float(screenWidth) / float(screenHeight);
-       auto sleepingTime = static_cast<std::chrono::milliseconds>(int(extraTime * 1000));
+       auto sleepingTime = static_cast<std::chrono::milliseconds>(int(extraTime * 1000) + 50);
        std::this_thread::sleep_for(sleepingTime); // Small Step = 1 Game Tick
+
+       losts += gameOver;
     }
 
     CloseHandle(hConsole);
