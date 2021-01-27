@@ -37,22 +37,14 @@ wchar_t* playFieldBuffer;
 std::vector<std::pair<int,int>> bodyCoord;
 std::pair<int, int> directions[] = { {1,0},{-1,0}, {0,1}, {0,-1} };
 
-void draw(int fieldWidth, int fieldHeight)
+void ShowConsoleCursor(const HANDLE& console, bool showFlag)
 {
-    for (int i = 0; i < fieldHeight + 1; i++)
-    {
-        for (int j = 0; j < fieldWidth + 1; j++)
-        {
-            if (i == 0 || i == fieldHeight - 1 || j == 0 || j == fieldWidth - 1)
-                std::cout << "#";
-            else if (i == bodyCoord[0].second && j == bodyCoord[0].first)
-                std::cout << "*";
-            else
-                std::cout << " ";
-        }
-        std::cout << "\n";
-    }
+	CONSOLE_CURSOR_INFO cursorInfo;
+	GetConsoleCursorInfo(console, &cursorInfo);
+	cursorInfo.bVisible = showFlag; // set the cursor visibility
+	SetConsoleCursorInfo(console, &cursorInfo);
 }
+
 
 void start()
 {
@@ -146,6 +138,7 @@ int main()
         screen[i] = L' ';
     HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
     SetConsoleActiveScreenBuffer(hConsole);
+    ShowConsoleCursor(hConsole, false);
 
     // filling the player field without the snake
     playFieldBuffer = new wchar_t[fieldWidth * fieldHeight];
