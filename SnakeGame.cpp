@@ -27,10 +27,11 @@ std::pair<T, U>& operator+=(std::pair<T, U>& l, const std::pair<T, U>& r)
 	return l;
 }
 
-const int fieldWidth = 25, fieldHeight = 25;
+const int fieldWidth = 50, fieldHeight = 25;
 const int screenWidth = 96, screenHeight = 26;
 
-bool gameOver = false;
+bool taken[50][25]; // [i][j] is true if there's a snake part at [i][j]
+bool gameOver = false, foodAv = false;
 wchar_t* playFieldBuffer;
 
 std::vector<std::pair<int,int>> bodyCoord;
@@ -60,8 +61,8 @@ void start()
 
     // using time as a seed for our random start point
     std::srand((unsigned int) std::time(nullptr));
-    uint32_t startX = std::rand() % (fieldWidth - 2)  + 1;
-    uint32_t startY = std::rand() % (fieldHeight - 2) + 1;
+    int startX = std::rand() % (fieldWidth - 2)  + 1;
+    int startY = std::rand() % (fieldHeight - 2) + 1;
 
     bodyCoord.push_back({startX, startY});
 }
@@ -74,7 +75,8 @@ enum class Direction
 	Down = 3
 };
 
-void moveSnake(bool &onY)
+// returns true if the snake just got the food
+bool moveSnake(bool &onY, int foodX, int foodY)
 {
     // default direction when we start is right 
     static Direction currentDirection = Direction::Right;
@@ -92,6 +94,10 @@ void moveSnake(bool &onY)
     std::pair<int,int> checkSum = directions[static_cast<int>(currentDirection)] + directions[static_cast<int>(newDirection)];
     if (checkSum.first != 0 && checkSum.second != 0)
         currentDirection = newDirection;
+    std::pair<int,int> lastTail = bodyCoord.back();
+
+    //exclude the tail place
+    taken[lastTail.first][lastTail.second] = false;
 
     auto temp = bodyCoord[0];
     for (auto& a : bodyCoord)
@@ -101,7 +107,36 @@ void moveSnake(bool &onY)
         else
             swap(a, temp);
     }
+
+    //include the new head place
+    temp = bodyCoord[0];
+    taken[temp.first][temp.second] = true;
+
+    if (temp == std::make_pair(foodX,foodY))
+    {
+        // return the last tail (it's the new piece)
+        bodyCoord.push_back(lastTail);
+        return true;
+    }
+    else
+        return false;
 }
+
+std::pair<int,int> generateFood()
+{
+
+    int foodX, foodY;
+    do
+    {
+	    foodX = std::rand() % (fieldWidth - 2) + 1;
+	    foodY = std::rand() % (fieldHeight - 2) + 1;
+
+    } while (taken[foodX][foodY]);
+
+    foodAv = true;
+    return { foodX, foodY };
+}
+
 int main()
 {
     // setting up the console screen
@@ -124,10 +159,11 @@ int main()
         }
 
     start();
+    auto food = generateFood();
 
-    // TODO change this line to game over condition or something else
+    // TODO change this line to game over condition "counter" or something else
     int t = 0;
-    while (t < 500)
+    while (!gameOver)
     {
         t++;
 
@@ -137,6 +173,7 @@ int main()
 				screen[y * screenWidth + x] = playFieldBuffer[y * fieldWidth + x];
 
         bool onY = false;
+        bool justAte = false;
 
         if (gameOver)
         {
@@ -144,7 +181,11 @@ int main()
             gameOver = false;
         }
         else
-            moveSnake(onY);
+        {
+            justAte = moveSnake(onY, food.first, food.second);
+        }
+
+        
 
 		// copy the snake to the screen buffer and if we lost and hit something mark it differently
         int atHead = 0;
@@ -161,14 +202,20 @@ int main()
 			}
         }
 
+        if (!gameOver && justAte)
+        {
+            food = generateFood();
+        }
+
+        screen[food.second * screenWidth + food.first] = L'+';
 
        WriteConsoleOutputCharacter(hConsole, screen, screenWidth * screenHeight, { 0,0 }, &writtenBytes);
 
        // sleep for more time when you lose for the player comfort
-       float temp = gameOver ? 1.f : 0.05f;
+       float extraTime = (gameOver) ? 1.f : 0.05f;
        if(onY)
-        temp *= float(screenWidth) / float(screenHeight);
-       auto sleepingTime = static_cast<std::chrono::milliseconds>(int(temp * 1000));
+           extraTime *= float(screenWidth) / float(screenHeight);
+       auto sleepingTime = static_cast<std::chrono::milliseconds>(int(extraTime * 1000));
        std::this_thread::sleep_for(sleepingTime); // Small Step = 1 Game Tick
     }
 
