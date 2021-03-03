@@ -10,24 +10,7 @@
 #include <chrono>
 #include <string>
 #include <algorithm>
-
-// TODO : hide the cursor in the console 
-
-// CPP standard can u please add + operator to std::pair))
-// call me crazy I don't care
-template<typename T, typename U>
-std::pair<T, U> operator+(const std::pair<T, U>& l, const std::pair<T, U>& r)
-{
-    return { l.first + r.first, l.second + r.second };
-}
-
-template<typename T, typename U>
-std::pair<T, U>& operator+=(std::pair<T, U>& l, const std::pair<T, U>& r)
-{
-	l.first += r.first;
-	l.second += r.second;
-	return l;
-}
+#include "PairHelpers.h"
 
 const int fieldWidth = 50, fieldHeight = 25;
 const int screenWidth = 96, screenHeight = 26;
