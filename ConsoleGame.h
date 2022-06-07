@@ -24,7 +24,7 @@
 const int fieldWidth = 50, fieldHeight = 25;
 const int screenWidth = 96, screenHeight = 26;
 const int games = 3;
-
+const auto TriesAllowed = 3;
 bool taken[50][25]; // [i][j] is true if there's a snake part at [i][j]
 bool gameOver = false, foodAv = false;
 wchar_t* playFieldBuffer;
@@ -173,7 +173,7 @@ void RunGame()
 
 	// TODO change this line to game over condition "counter" or something else
 	int losts = 0, score = 0;
-	while (losts < 3)
+	while (losts < TriesAllowed)
 	{
 		// copy the playground to the screen buffer
 		for (int x = 0; x < fieldWidth; x++)
