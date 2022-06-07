@@ -6,6 +6,7 @@ endif(MSVC)
 
 include_directories("${PROJECT_SOURCE_DIR}")
 
-add_executable(SnakeGame main.cpp)
+add_executable(SnakeGame main.cpp SnakeGame.cpp SnakeGame.hpp Game.hpp)
+
 add_definitions(-DUNICODE -D_UNICODE)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT SnakeGame)

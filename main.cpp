@@ -1,8 +1,10 @@
-#include "ConsoleGame.h"
+#include "SnakeGame.hpp"
 
 
 int main()
 {
-    RunGame();
+    SnakeGame game;
+    //game.Initialize();
+    game.Run();
     return 0;
 }

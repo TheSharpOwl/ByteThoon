@@ -136,7 +136,6 @@ void printPlayerInfo(wchar_t* screen, int score, int gamesLeft)
 		screen[screenWidth * 9 + fieldWidth + 7 + i] = printedGames[i];
 }
 
-
 void RunGame()
 {
 	// setting up the console screen
