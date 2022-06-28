@@ -8,6 +8,10 @@
 <br />
 
 ## Requirements:
+### To Play?
+Just grab the exe from Releases :sunglasses:
+
+### To Build
 1. Windows OS
 2. MS C++ Compiler (better use VS 2019 or later)
 3. CMake 3.18 or newer
