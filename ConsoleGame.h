@@ -148,6 +148,21 @@ void RunGame()
 	SetConsoleActiveScreenBuffer(hConsole);
 	ShowConsoleCursor(hConsole, false);
 
+	// make the console having the approperiate size
+	HWND console = GetConsoleWindow();
+	RECT r;
+	GetWindowRect(console, &r); // stores the console's current dimensions
+	const int width = 900;
+	const int height = 800;
+
+	MoveWindow(console, r.left, r.top, width, height, TRUE);
+
+	// set the window in the middle
+	SetWindowPos(GetConsoleWindow(), NULL,
+		GetSystemMetrics(SM_CXSCREEN) / 2 - width / 2,
+		GetSystemMetrics(SM_CYSCREEN) / 2 - height / 2,
+		width, height, SWP_SHOWWINDOW);
+
 	// filling the player field without the snake
 	playFieldBuffer = new wchar_t[fieldWidth * fieldHeight];
 	for (int i = 0; i < fieldWidth; i++)
