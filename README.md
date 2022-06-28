@@ -1,11 +1,11 @@
 # ByteThoon
     
 ### Console Snake Game using C++ Win32 API
-<br>
-<div style="text-align: center;">
+<br />
+<div align="center">
 <img src="https://file.asciiart.cc/cover/6fbd2fc56e496c14.png!cover_jpg" alt="Console Snake Image"> 
 </div>
-<br>
+<br />
 
 ## Requirements:
 1. Windows OS
